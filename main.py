@@ -1,29 +1,34 @@
 
 import streamlit as st
-import mailbox
-from collections import Counter
-import string
-from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud
 
-uploaded_file = st.file_uploader("Upload an .mbox file", type="mbox")
+st.title("Email Word Cloud Generator")
+
+uploaded_file = st.file_uploader("Upload your email text file", type=["txt"])
 
 if uploaded_file is not None:
-    mbox = mailbox.mbox(uploaded_file.name)
-    all_words = []
+    # Read file content
+    text = uploaded_file.read().decode("utf-8")
 
-    for message in mbox:
-        body = message.get_payload()
-        if body:
-            body = body.lower()
-            body = body.translate(str.maketrans('', '', string.punctuation))
-            words = body.split()
-            all_words.extend(words)
+    # Show raw text
+    st.subheader("Email Content")
+    st.text(text)
 
-    count = Counter(all_words)
-    st.write("Top 10 words:", count.most_common(10))
+    
+    wordcloud = WordCloud(width=800, height=400, background_color="white").generate(text)
+    
+    st.subheader("Word Cloud")
+    fig, ax = plt.subplots()
+    ax.imshow(wordcloud, interpolation="bilinear")
+    ax.axis("off")
+    st.pyplot(fig)
 
-    wc = WordCloud(width=800, height=400, background_color='white')
-    wc.generate_from_frequencies(count)
+    
+    st.download_button(
+        label="Download Word Cloud Text",
+        data=text,
+        file_name="email_output.txt",
+        mime="text/plain"
+    )
 
-    st.image(wc.to_array(), use_column_width=True)
